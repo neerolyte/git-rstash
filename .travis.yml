@@ -1,0 +1,3 @@
+language: bash
+install: shunit2
+script: shunit2 tests/test_rstash
