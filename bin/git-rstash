@@ -1,0 +1,157 @@
+#!/bin/bash -e
+
+main() {
+	parse_cli "$@"
+	populate_config
+
+	if $debug; then set -x; fi
+	run_command
+}
+
+usage() {
+	echo "Usage: git rstash list"
+	echo "   or: git rstash show"
+	echo "   or: git rstash save [<message>]"
+	echo "   or: git rstash ( pop | apply )"
+	echo "   or: git rstash clear"
+	exit 1
+}
+
+run_command() {
+	[[ "$(type -t "command_$verb")" == "function" ]] || usage
+	"command_$verb"
+}
+
+parse_cli() {
+	parse_verb "$@" && shift
+
+	while true; do
+		[[ "${#@}" -gt 0 ]] || break
+		case "$1" in 
+			--debug)
+				debug=true
+				;;
+			--quiet|-q)
+				quiet=true
+				;;
+			--*)
+				usage
+				;;
+			*)
+				break
+				;;
+		esac
+
+		shift
+	done
+
+	trailing="$*"
+}
+
+populate_config() { 
+	# try git config for storage directory
+	rstash_dir="$(git config --get rstash.dir || true)"
+	# fail back to home directory
+	rstash_dir="${rstash_dir:-$HOME/.git-rstash}"
+
+	name="$trailing"
+	debug=${debug:-false}
+	rstash_store="$rstash_dir/store$(current_top_level)"
+	quiet="${quiet:-false}"
+	if $quiet; then
+		quiet_arg=--quiet
+	else
+		quiet_arg=''
+	fi
+}
+
+get_message() {
+	echo "${trailing:-$(current_commit_info)}"
+}
+
+parse_verb() {
+	[[ "${#@}" -gt 0 ]] || usage
+	verb="$1"
+}
+
+error() {
+	echo "ERROR: $*"
+	exit 1
+}
+
+command_save() {
+	prep_store
+	# TODO: test for --binary
+	git diff --binary > "$rstash_store/rstash@{$(current_rstash_id)}: WIP on $(current_branch): $(get_message)"
+	git reset $quiet_arg --hard
+}
+
+command_list() {
+	prep_store
+	ls -1 -- "$rstash_store"
+}
+
+command_apply() {
+	find_rstash_file
+	git apply < "$rstash_file"
+	if ! $quiet; then
+		git status
+	fi
+}
+
+command_pop() {
+	command_apply
+	rm -f -- "$rstash_file"
+}
+
+command_cat() {
+	find_rstash_file
+	cat "$rstash_file"
+}
+
+command_clear() {
+	rm -rf -- "$rstash_store"
+}
+
+# mostly for testing
+command_get-dir() {
+	echo "$rstash_dir"
+}
+command_get-current-stash() {
+	find_rstash_file
+	echo "$rstash_file"
+}
+
+find_rstash_file() {
+	files=("$rstash_store/"*"$trailing"*)
+	if [[ "${#files[@]}" -gt 1 ]] && ! [[ -z "$trailing" ]]; then
+		error "'$trailing' was ambiguous (hint: 'git rstash list')"
+	elif [[ "${#files[@]}" == 0 ]]; then
+		error "'$trailing' matched no rstashes (hint: 'git rstash list')"
+	fi
+	# grab the last matching one
+	offset=$((${#files[@]} - 1))
+	rstash_file="${files[$offset]}"
+}
+
+prep_store() {
+	mkdir -p -- "$rstash_store"
+}
+
+current_commit_info() {
+	git show --oneline --name-only | head -1
+}
+
+current_branch() {
+	git branch | awk '$1 == "*" { print $2 }'
+}
+
+current_top_level() {
+	git rev-parse --show-toplevel
+}
+
+current_rstash_id() {
+	date -Ins
+}
+
+main "$@"

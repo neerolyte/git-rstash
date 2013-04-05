@@ -1,0 +1,135 @@
+#!/bin/bash
+
+# shunit2 style unit tests for some ARMED functionality
+
+type -t > /dev/null 2>&1 || {
+	# we're not running under bash, retry the tests but with bash this time
+	exec bash shunit2 "$@"
+	exit $?
+}
+
+# move in to root directory under shunit2 the file we're in is the 2nd argument (or $1)
+cd "$(dirname "$1")/.."
+root="$PWD"
+# put our bin first in $PATH
+PATH="$root/bin:$PATH"
+# where we can store stuff during tests
+temp="$root/temp"
+rstash_dir="$temp/rstash-dir"
+
+reset_repo() {
+	rm -rf -- "$temp/repo" "$rstash_dir"
+	git init --quiet "$temp/repo"
+	cd "$temp/repo"
+	git config --add rstash.dir "$rstash_dir"
+
+	echo > file
+	git add file
+	git commit -q -m "initial commit"
+}
+
+testDirHonoursConfig() {
+	reset_repo
+
+	assertEquals \
+		"rstash should get store from local git repos config" \
+		"$rstash_dir" \
+		"$(git rstash get-dir)"
+
+	git config --unset rstash.dir
+
+	assertEquals \
+		"rstash should fall back to home dir" \
+		"$HOME/.git-rstash" \
+		"$(git rstash get-dir)"
+}
+
+testListStartsEmpty() {
+	reset_repo
+
+	assertEquals \
+		"list should start empty" \
+		"" \
+		"$(git rstash list)"
+}
+
+testListGrowsWhenStashing() {
+	reset_repo
+
+	echo foo > file
+	git rstash save -q save one
+
+	assertEquals \
+		"list should grow when stashing" \
+		"1" \
+		"$(git rstash list | wc -l)"
+
+	echo bar > file
+	git rstash save -q save two
+
+	assertEquals \
+		"list should grow when stashing" \
+		"2" \
+		"$(git rstash list | wc -l)"
+}
+
+testCanGetCurrentStash() {
+	reset_repo
+	echo foo > file; git rstash save -q save number one
+
+	assertEquals \
+		"expected to find the saved stash" \
+		"save number one" \
+		"$(git rstash get-current-stash | sed 's/.*: //')"
+}
+
+testGrabsMostRecentWhenNoNameGiven() {
+	reset_repo
+
+	echo foo > file; git rstash save -q save one
+	echo bar > file; git rstash save -q save two
+
+	assertEquals \
+		"expected to find save two first as it was saved last" \
+		"save two" \
+		"$(git rstash get-current-stash | sed 's/.*: //')"
+}
+
+testStashActuallyHasContent() {
+	reset_repo
+	echo foo > file; git rstash save -q save one
+
+	assertNotEquals \
+		"the patch should actually have content" \
+		"0" \
+		"$(git rstash cat | wc -l)"
+}
+
+testListShrinksWhenPopping() {
+	reset_repo
+
+	echo foo > file
+	git rstash save -q save one
+	echo bar > file
+	git rstash save -q save two
+
+	git rstash pop -q
+
+	assertEquals \
+		"list should shrink when popping" \
+		"1" \
+		"$(git rstash list | wc -l)"
+
+	git reset --hard --quiet
+	git rstash pop -q
+
+	assertEquals \
+		"list should shrink when popping" \
+		"0" \
+		"$(git rstash list | wc -l)"
+}
+
+echo "TODO: test to ensure rstash notices when no commits have happened yet"
+echo "TODO: test for ambiguously matched file"
+echo "TODO: test for no matched file"
+echo "TODO: displays status after applying if not quiet"
