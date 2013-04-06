@@ -56,7 +56,6 @@ populate_config() {
 
 	name="$trailing"
 	debug=${debug:-false}
-	rstash_store="$rstash_dir/store$(current_top_level)"
 	quiet="${quiet:-false}"
 	if $quiet; then
 		quiet_arg=--quiet
@@ -82,13 +81,13 @@ error() {
 command_save() {
 	prep_store
 	# TODO: test for --binary
-	git diff --binary > "$rstash_store/rstash@{$(current_rstash_id)}: WIP on $(current_branch): $(get_message)"
+	git diff --binary > "$(rstash_store)/rstash@{$(current_rstash_id)}: WIP on $(current_branch): $(get_message)"
 	git reset $quiet_arg --hard
 }
 
 command_list() {
 	prep_store
-	ls -1 -- "$rstash_store"
+	ls -1 -- "$(rstash_store)"
 }
 
 command_apply() {
@@ -110,7 +109,7 @@ command_cat() {
 }
 
 command_clear() {
-	rm -rf -- "$rstash_store"
+	rm -f -- "$(rstash_store)/"*
 }
 
 # mostly for testing
@@ -121,9 +120,12 @@ command_get-current-stash() {
 	find_rstash_file
 	echo "$rstash_file"
 }
+command_get-store() {
+	rstash_store
+}
 
 find_rstash_file() {
-	files=("$rstash_store/"*"$trailing"*)
+	files=("$(rstash_store)/"*"$trailing"*)
 	if [[ "${#files[@]}" -gt 1 ]] && ! [[ -z "$trailing" ]]; then
 		error "'$trailing' was ambiguous (hint: 'git rstash list')"
 	elif [[ "${#files[@]}" == 0 ]]; then
@@ -135,7 +137,11 @@ find_rstash_file() {
 }
 
 prep_store() {
-	mkdir -p -- "$rstash_store"
+	mkdir -p -- "$(rstash_store)"
+}
+
+rstash_store() {
+	echo "$rstash_dir/$(current_top_level | sha256sum | cut -f1 -d' ')"
 }
 
 current_commit_info() {

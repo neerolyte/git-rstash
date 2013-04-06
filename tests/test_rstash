@@ -129,7 +129,37 @@ testListShrinksWhenPopping() {
 		"$(git rstash list | wc -l)"
 }
 
+testParentsDoNotAffectChildren() {
+	# bug I noticed due to original storage format
+	git init -q child
+	cd child
+	git config --add rstash.dir "$rstash_dir"
+
+	echo > file
+	git add file
+	git commit -q -m "initial commit"
+	echo foo > file
+	git rstash save -q
+
+	cd ..
+
+	assertEquals \
+		"parent repo should still have 0 stashes" \
+		"0" \
+		"$(git rstash list | wc -l)"
+}
+
+testStoreIsUnderDir() {
+	store="$(git rstash get-store)"
+	assertEquals \
+		"store should be under dir" \
+		"$rstash_dir" \
+		"${store:0:${#rstash_dir}}"
+}
+
 echo "TODO: test to ensure rstash notices when no commits have happened yet"
 echo "TODO: test for ambiguously matched file"
 echo "TODO: test for no matched file"
 echo "TODO: displays status after applying if not quiet"
+echo "TODO: test pointing two repos at the same upstream rstash store"
+echo "TODO: record some metadata about what the store is used for"
