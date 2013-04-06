@@ -17,6 +17,11 @@ PATH="$root/bin:$PATH"
 temp="$root/temp"
 rstash_dir="$temp/rstash-dir"
 
+# under vagrant store tests somewhere faster than vboxfs
+if id vagrant > /dev/null 2>&1; then
+	temp="/tmp/rstash-temp"
+fi
+
 reset_repo() {
 	rm -rf -- "$temp/repo" "$rstash_dir"
 	git init --quiet "$temp/repo"
