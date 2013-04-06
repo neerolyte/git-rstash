@@ -44,6 +44,19 @@ $ git rstash list-stores
 f5a10c44f3ebdac77870f74e9dfb3a88213eb99b3de0da82f47cda135178bf7f: /tmp/foo
 ```
 
+It can be useful to have multiple copies of a repository all using the same stash store, git-rstash can be configured to do this by pointing a local repository at a different repos store by configuring `rstash.store`:
+```bash
+$ cd /tmp/foo
+$ git rstash save "Saved stash from foo"
+HEAD is now at f3b6b95 initial commit
+$ cd /tmp
+$ git clone foo bar
+$ cd bar
+$ git config rstash.store f5a10c44f3ebdac77870f74e9dfb3a88213eb99b3de0da82f47cda135178bf7f
+$ git rstash list
+rstash@{2013-04-06T15:00:20,147034796+1100}: WIP on master: Saved stash from foo
+```
+
 Syncing
 -------------------------------
 

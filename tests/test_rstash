@@ -15,12 +15,11 @@ root="$PWD"
 PATH="$root/bin:$PATH"
 # where we can store stuff during tests
 temp="$root/temp"
-rstash_dir="$temp/rstash-dir"
-
 # under vagrant store tests somewhere faster than vboxfs
 if id vagrant > /dev/null 2>&1; then
 	temp="/tmp/rstash-temp"
 fi
+rstash_dir="$temp/rstash-dir"
 
 reset_repo() {
 	rm -rf -- "$temp/repo" "$rstash_dir"
@@ -155,9 +154,9 @@ testParentsDoNotAffectChildren() {
 		"$(git rstash list | wc -l)"
 }
 
-testStoreIsUnderDir() {
+testStoreDirIsUnderDir() {
 	reset_repo
-	store="$(git rstash get-store)"
+	store="$(git rstash get-store-dir)"
 	assertEquals \
 		"store should be under dir" \
 		"$rstash_dir" \
@@ -193,6 +192,28 @@ testEnumeratingStores() {
 		"starts with just our base repo in it" \
 		"repo" \
 		"$(git rstash list-stores | sed "s%.*: $temp/%%")"
+}
+
+testUseOtherReposStore() {
+	reset_repo
+	echo foo > file; git rstash save -q first repos stash
+	store="$(git rstash get-store)"
+
+	cd ..
+	git init -q repo2
+	cd repo2
+	git config rstash.dir "$rstash_dir" # because we're not setting this globally we need to do it in the test
+	git config rstash.store "$store"
+
+	assertEquals \
+		"should use first repos store" \
+		"$store" \
+		"$(git rstash get-store)"
+
+	assertEquals \
+		"should get stash from first repo" \
+		"first repos stash" \
+		"$(git rstash list | sed "s%.*: %%")"
 }
 
 echo "TODO: test to ensure rstash notices when no commits have happened yet"

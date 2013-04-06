@@ -83,13 +83,13 @@ error() {
 command_save() {
 	prep_store
 	# TODO: test for --binary
-	git diff --binary > "$(rstash_store)/stashes/rstash@{$(current_rstash_id)}: WIP on $(current_branch): $(get_message)"
+	git diff --binary > "$(command_get-store-dir)/stashes/rstash@{$(current_rstash_id)}: WIP on $(current_branch): $(get_message)"
 	git reset $quiet_arg --hard
 }
 
 command_list() {
 	prep_store
-	ls -1 -- "$(rstash_store)/stashes"
+	ls -1 -- "$(command_get-store-dir)/stashes"
 }
 
 command_apply() {
@@ -111,7 +111,7 @@ command_cat() {
 }
 
 command_clear() {
-	rm -f -- "$(rstash_store)/stashes/"*
+	rm -f -- "$(command_get-store-dir)/stashes/"*
 }
 
 command_sync() {
@@ -134,7 +134,7 @@ command_list-stores() {
 	)
 }
 
-# mostly for testing
+# Internal APIs that are exposed somewhat silently
 command_get-dir() {
 	echo "$rstash_dir"
 }
@@ -142,12 +142,21 @@ command_get-current-stash() {
 	find_rstash_file
 	echo "$rstash_file"
 }
+command_get-store-dir() {
+	echo "$rstash_dir/$(command_get-store)"
+}
+# what is the ID of the current store in use
+# will just be the hash, not the full path to it
 command_get-store() {
-	rstash_store
+	# try to echo out store from git config
+	if ! git config --get rstash.store 2> /dev/null; then
+		# otherwise default to one based on our current top level
+		current_top_level | sha256sum | cut -f1 -d' '
+	fi
 }
 
 find_rstash_file() {
-	files=("$(rstash_store)/stashes/"*"$trailing"*)
+	files=("$(command_get-store-dir)/stashes/"*"$trailing"*)
 	if [[ "${#files[@]}" -gt 1 ]] && ! [[ -z "$trailing" ]]; then
 		error "'$trailing' was ambiguous (hint: 'git rstash list')"
 	elif [[ "${#files[@]}" == 0 ]]; then
@@ -159,15 +168,11 @@ find_rstash_file() {
 }
 
 prep_store() {
-	store="$(rstash_store)"
+	store="$(command_get-store-dir)"
 	if ! [[ -d "$store/stashes" ]]; then
 		mkdir -p -- "$store/stashes"
 		echo "repo_location=$(current_top_level)" > "$store/metadata"
 	fi
-}
-
-rstash_store() {
-	echo "$rstash_dir/$(current_top_level | sha256sum | cut -f1 -d' ')"
 }
 
 current_commit_info() {
