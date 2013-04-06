@@ -135,6 +135,7 @@ testListShrinksWhenPopping() {
 }
 
 testParentsDoNotAffectChildren() {
+	reset_repo
 	# bug I noticed due to original storage format
 	git init -q child
 	cd child
@@ -155,6 +156,7 @@ testParentsDoNotAffectChildren() {
 }
 
 testStoreIsUnderDir() {
+	reset_repo
 	store="$(git rstash get-store)"
 	assertEquals \
 		"store should be under dir" \
@@ -163,6 +165,7 @@ testStoreIsUnderDir() {
 }
 
 testExplainsSyncConfig() {
+	reset_repo
 	assertNotEquals \
 		"sync should error with help to get it working when unconfigured" \
 		"" \
@@ -170,6 +173,7 @@ testExplainsSyncConfig() {
 }
 
 testSyncRuns() {
+	reset_repo
 	git config rstash.sync.cmd 'touch sync-command-ran'
 
 	git rstash sync
@@ -180,9 +184,18 @@ testSyncRuns() {
 		"$(ls -1 | grep sync-command-ran)"
 }
 
+testEnumeratingStores() {
+	reset_repo
+
+	echo foo > file; git rstash save -q
+
+	assertEquals \
+		"starts with just our base repo in it" \
+		"repo" \
+		"$(git rstash list-stores | sed "s%.*: $temp/%%")"
+}
+
 echo "TODO: test to ensure rstash notices when no commits have happened yet"
 echo "TODO: test for ambiguously matched file"
 echo "TODO: test for no matched file"
 echo "TODO: displays status after applying if not quiet"
-echo "TODO: test pointing two repos at the same upstream rstash store"
-echo "TODO: record some metadata about what the store is used for"

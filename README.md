@@ -38,6 +38,12 @@ $ git rstash apply # apply the last one
 $ git rstash pop # works the same as apply, but removes the applied stash from the list
 ```
 
+git-rstash by default will create a store for each repo, these can be listed with `list-stores`:
+```bash
+$ git rstash list-stores
+f5a10c44f3ebdac77870f74e9dfb3a88213eb99b3de0da82f47cda135178bf7f: /tmp/foo
+```
+
 Syncing
 -------------------------------
 
