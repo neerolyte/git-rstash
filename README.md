@@ -55,7 +55,7 @@ $ git config --global --add rstash.sync.cmd "unison -batch -ui text $HOME/.git-r
 
 and then to trigger a sync with Unison:
 ```bash
-$ grs sync
+$ git rstash sync
 Contacting server...
 Connected [//foo//home/user/.git-rstash -> //bar//home/user/.git-rstash]
 Looking for changes
