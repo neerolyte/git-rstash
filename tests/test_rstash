@@ -21,7 +21,7 @@ reset_repo() {
 	rm -rf -- "$temp/repo" "$rstash_dir"
 	git init --quiet "$temp/repo"
 	cd "$temp/repo"
-	git config --add rstash.dir "$rstash_dir"
+	git config rstash.dir "$rstash_dir"
 
 	echo > file
 	git add file
@@ -133,7 +133,7 @@ testParentsDoNotAffectChildren() {
 	# bug I noticed due to original storage format
 	git init -q child
 	cd child
-	git config --add rstash.dir "$rstash_dir"
+	git config rstash.dir "$rstash_dir"
 
 	echo > file
 	git add file
@@ -161,11 +161,11 @@ testExplainsSyncConfig() {
 	assertNotEquals \
 		"sync should error with help to get it working when unconfigured" \
 		"" \
-		"$(git rstash sync | grep 'git config --global --add')"
+		"$(git rstash sync | grep 'git config --global')"
 }
 
 testSyncRuns() {
-	git config --add rstash.sync.cmd 'touch sync-command-ran'
+	git config rstash.sync.cmd 'touch sync-command-ran'
 
 	git rstash sync
 
