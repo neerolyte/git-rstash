@@ -37,3 +37,8 @@ $ git rstash apply '2013-04-05T18:33:16' # match in the ID
 $ git rstash apply # apply the last one
 $ git rstash pop # works the same as apply, but removes the applied stash from the list
 ```
+
+Known Issues
+-------------------------------
+
+It's really early days so the format is still up for change at any point.
