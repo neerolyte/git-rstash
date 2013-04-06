@@ -50,7 +50,7 @@ $ git config --global --add rstash.dir "$HOME/Dropbox/git-rstash"
 
 If you would like to use a custom syncing script that can easily be done too, e.g. to configure Unison:
 ```bash
-$ git config --global --add rstash.sync.cmd "unison -ui text $HOME/.git-rstash ssh://<your server>/.git-rstash")'
+$ git config --global --add rstash.sync.cmd "unison -batch -ui text $HOME/.git-rstash ssh://<your server>/.git-rstash")'
 ```
 
 and then to trigger a sync with Unison:

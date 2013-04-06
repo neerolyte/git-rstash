@@ -116,7 +116,7 @@ command_clear() {
 command_sync() {
 	cmd="$(git config --get rstash.sync.cmd 2>/dev/null || true)"
 	if [[ -z "$cmd" ]]; then
-		error 'Can not sync without a sync command (hint: git config --global --add rstash.sync.cmd "unison -ui text $HOME/.git-rstash ssh://<your server>/.git-rstash")'
+		error 'Can not sync without a sync command (hint: git config --global --add rstash.sync.cmd "unison -batch -ui text $HOME/.git-rstash ssh://<your server>/.git-rstash")'
 	fi
 	$cmd
 }
