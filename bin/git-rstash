@@ -83,7 +83,7 @@ error() {
 command_save() {
 	prep_store
 	# TODO: test for --binary
-	git diff --binary > "$(command_get-store-dir)/stashes/rstash@{$(current_rstash_id)}: WIP on $(current_branch): $(get_message)"
+	git diff --binary > "$(command_get-store-dir)/stashes/rstash@{$(generate_id)}: WIP on $(current_branch): $(get_message)"
 	git reset $quiet_arg --hard
 }
 
@@ -187,7 +187,7 @@ current_top_level() {
 	git rev-parse --show-toplevel
 }
 
-current_rstash_id() {
+generate_id() {
 	date -Ins
 }
 
