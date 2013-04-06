@@ -14,6 +14,7 @@ usage() {
 	echo "   or: git rstash save [<message>]"
 	echo "   or: git rstash ( pop | apply )"
 	echo "   or: git rstash clear"
+	echo "   or: git rstash sync"
 	exit 1
 }
 
@@ -110,6 +111,14 @@ command_cat() {
 
 command_clear() {
 	rm -f -- "$(rstash_store)/"*
+}
+
+command_sync() {
+	cmd="$(git config --get rstash.sync.cmd 2>/dev/null || true)"
+	if [[ -z "$cmd" ]]; then
+		error 'Can not sync without a sync command (hint: git config --global --add rstash.sync.cmd "unison -ui text $HOME/.git-rstash ssh://<your server>/.git-rstash")'
+	fi
+	$cmd
 }
 
 # mostly for testing

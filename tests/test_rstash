@@ -157,6 +157,24 @@ testStoreIsUnderDir() {
 		"${store:0:${#rstash_dir}}"
 }
 
+testExplainsSyncConfig() {
+	assertNotEquals \
+		"sync should error with help to get it working when unconfigured" \
+		"" \
+		"$(git rstash sync | grep 'git config --global --add')"
+}
+
+testSyncRuns() {
+	git config --add rstash.sync.cmd 'touch sync-command-ran'
+
+	git rstash sync
+
+	assertEquals \
+		"sync command should run" \
+		"sync-command-ran" \
+		"$(ls -1 | grep sync-command-ran)"
+}
+
 echo "TODO: test to ensure rstash notices when no commits have happened yet"
 echo "TODO: test for ambiguously matched file"
 echo "TODO: test for no matched file"
