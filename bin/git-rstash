@@ -83,7 +83,10 @@ error() {
 command_save() {
 	prep_store
 	# TODO: test for --binary
-	git diff --binary > "$(command_get-store-dir)/stashes/rstash@{$(generate_id)}: WIP on $(current_branch): $(get_message)"
+	( 
+		git diff --binary --cached # new staged files
+		git diff --binary # regular staged files
+	) > "$(command_get-store-dir)/stashes/rstash@{$(generate_id)}: WIP on $(current_branch): $(get_message)"
 	git reset $quiet_arg --hard
 }
 

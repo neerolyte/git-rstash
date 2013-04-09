@@ -216,7 +216,23 @@ testUseOtherReposStore() {
 		"$(git rstash list | sed "s%.*: %%")"
 }
 
-echo "TODO: test to ensure rstash notices when no commits have happened yet"
-echo "TODO: test for ambiguously matched file"
-echo "TODO: test for no matched file"
-echo "TODO: displays status after applying if not quiet"
+testStashStagedFilesDoesNotLoseFile() {
+	reset_repo
+
+	echo foo > a_new_file
+	git add a_new_file
+
+	git rstash save -q
+
+	assertEquals \
+		"should have removed new file for now" \
+		"missing" \
+		"$([[ -f a_new_file ]] && echo found || echo missing)"
+
+	git rstash pop -q
+
+	assertEquals \
+		"should have restored new file" \
+		"found" \
+		"$([[ -f a_new_file ]] && echo found || echo missing)"
+}
