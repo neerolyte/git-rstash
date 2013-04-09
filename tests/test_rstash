@@ -236,3 +236,17 @@ testStashStagedFilesDoesNotLoseFile() {
 		"found" \
 		"$([[ -f a_new_file ]] && echo found || echo missing)"
 }
+
+testEmptyStash() {
+	reset_repo
+
+	assertEquals \
+		"save should be rejected" \
+		"No local changes to save" \
+		"$(git rstash save)"
+
+	assertEquals \
+		"exit status should still be ok" \
+		"0" \
+		"$(git rstash save > /dev/null; echo $?)"
+}
