@@ -249,4 +249,9 @@ testEmptyStash() {
 		"exit status should still be ok" \
 		"0" \
 		"$(git rstash save > /dev/null; echo $?)"
+
+	assertEquals \
+		"stash list is still empty" \
+		"0" \
+		"$(git rstash list | wc -l)"
 }
